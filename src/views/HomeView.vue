@@ -2,7 +2,7 @@
   <div class="container">
     <div class="row">
       <div class="col-6">
-        <Searchbar/>
+        <Searchbar :data ="countries"/>
       </div>
       <div class="col-6 filter">
   <Filter  @select="filterCountry"/>
@@ -30,6 +30,7 @@ export default {
 return{
   countries:[],
   loading:false,
+  region:""
 
 }  },
 
@@ -42,57 +43,57 @@ return{
   apollo:{
     countries:{
 query:gql`
-query{
-  
-  countries {
+
+query($regions:String){
+  countries(region: $regions) {
     edges {
       node {
         name
-       
+        callingCodes
         capital
-        
         region
         subregion
         population
-     
         borders
-        
-        currencies{
-          edges{
-            node{
+        nativeName
+        currencies {
+          edges {
+            node {
               name
-              
+              code
               symbol
             }
           }
         }
-        languages{
-          edges{
-            node{
+        languages {
+          edges {
+            node {
               name
-      
+              nativeName
             }
           }
         }
-   
         flag
-        
         cioc
       }
     }
   }
 }
+`,
+variables(){
+return{
+  regions:this.region
 
-
-`
+}}
     }
   },
   methods:{
     filterCountry(region){
-  // this.countries = this.countries.edges.filter(country => country.node.region === region)
-let countries = this.countries
-countries = countries.edges.filter(country=>country.node.region === region)
-this.countries ={edges:countries}
+//   // this.countries = this.countries.edges.filter(country => country.node.region === region)
+// let countries = this.countries
+// countries = countries.edges.filter(country=>country.node.region === region)
+// this.countries ={edges:countries}
+this.region = region
 },
   }
 }

@@ -4,18 +4,19 @@
       <i class="fas fa-arrow-left"></i>
       <span @click="back()">Back</span>
     </div>
-    <div v-if="!loading">
-      <div class="rowe">
+    <div v-if="!this.$apollo.loading">
+    
+    <div class="rowe" v-for="count in countries.edges" :key="count.node.cioc">
         <div class="col-2">
           <div class="image-container">
-            <img :src="count.flags.png" alt="" />
+            <img :src="count.node.flag" alt="" />
           </div>
         </div>
         <div class="col-3">
           <div class="country-details">
             <div class="name">
               <h2>
-                {{ count.name.common }}
+                {{ count.node.name }}
               </h2>
             </div>
             <div class="details rowe2">
@@ -23,44 +24,41 @@
                 <p>
                   Native Name:<span>
                     {{
-                      count.name.nativeName[Object.keys(count.languages)[0]]
-                        .common
+                      count.node.nativeName
                     }}</span
                   >
                 </p>
                 <p>
                   Population:<span>{{
-                    count.population.toLocaleString()
+                    count.node.population.toLocaleString()
                   }}</span>
                 </p>
                 <p>
-                  Region:<span>{{ count.region }}</span>
+                  Region:<span>{{ count.node.region }}</span>
                 </p>
 
                 <p>
-                  Sub Region:<span>{{ count.subregion }}</span>
+                  Sub Region:<span>{{ count.node.subregion }}</span>
                 </p>
                 <p>
-                  Capital:<span v-for="cot in count.capital" :key="cot">{{
-                    cot
+                  Capital:<span>{{
+                    count.node.capital
                   }}</span>
                 </p>
               </div>
               <div class="col-6">
                 <p>
-                  Top Level Domain:<span v-for="cot in count.tld" :key="cot">{{
+                  Top Level Domain:<span v-for="cot in count.node.topLevelDomain" :key="cot">{{
                     cot
                   }}</span>
                 </p>
                 <p>
-                  Currencies:<span>{{
-                    count.currencies[Object.keys(count.currencies)[0]].name
-                  }}</span>
+                  Currencies:
+                  <span v-for="cot in count.node.currencies.edges" :key="cot.id">{{ cot.node.symbol}}</span>
+                 
                 </p>
                 <p>
-                  Languages:<span>{{
-                    count.languages[Object.keys(count.languages)[0]]
-                  }}</span>
+                  Languages:<span v-for="cot in count.node.languages.edges" :key="cot.id">{{ cot.node.name}}</span>
                 </p>
               </div>
             </div>
@@ -68,67 +66,103 @@
               <p>Border Countries:</p>
               <div class="bod">
                 <p
-                  v-for="bord in borders"
+                  v-for="bord in count.node.borders"
                   :key="bord"
                   class="back"
                   :class="{ bg: $store.state.theme }"
-                  @click="openNewDetail(bord.ccn3)"
+                  @click="openNewDetail(bord)"
                 >
                   {{
-                    bord.name.nativeName[Object.keys(bord.languages)[0]].common
+                    bord
                   }}
                 </p>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </div> 
+   
+    </div>
+    <div v-else>
+      <Modal/>
     </div>
   </section>
 </template>
 
 <script>
-import axios from "axios";
+import gql from 'graphql-tag';
+import Modal from '@/components/Modal.vue';
 export default {
-  name: "Details",
-  data() {
-    return {
-      url: `https://restcountries.com/v3.1/alpha?codes=${this.$route.params.id}`,
-      loading: true,
-      count: null,
-      borders: null,
-    };
-  },
-  mounted() {
-    let countries = JSON.parse(localStorage.getItem("country"));
-    let country = countries.find(
-      (country) => country.ccn3 == this.$route.params.id
-    );
-    this.loading = false;
-    this.count = country;
-
-    let boadingState = countries.filter((state) =>
-      country.borders.includes(state.cca3)
-    );
-    this.borders = boadingState;
-  },
-  computed: {},
-
-  methods: {
-    back() {
-      this.$router.push("/");
+    name: "Details",
+    data() {
+        return {
+            loading: true,
+            countries: null,
+            borders: null,
+        };
     },
-    openNewDetail(bord) {
-      let countries = JSON.parse(localStorage.getItem("country"));
-      let country = countries.find((country) => country.ccn3 == bord);
-      this.loading = false;
-       let boadingState = countries.filter((state) =>
-      country.borders.includes(state.cca3)
-    );
-    this.borders = boadingState;
-      this.count = country;
+    mounted() {
+        this.borders = this.$route.params.id;
+        if(this.$apollo.loading === false){
+          console.log(this.countries);
+          this.countries.edges.forEach((item)=>{
+            console.log(item.node.borders);
+          })
+        }
     },
-  },
+    apollo: {
+        countries: {
+            query: gql `
+query($id:String){
+  countries(cioc: $id) {
+    edges {
+      node {
+        name
+        nativeName
+        borders
+        population
+        capital
+        region
+        currencies {
+         edges {
+            node {
+              id
+              symbol
+            }
+          }
+        }
+        languages {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+        subregion
+        flag
+        topLevelDomain
+      }
+    }
+  }
+}`,
+            variables() {
+                return {
+                    id: this.borders
+                };
+            }
+        }
+    },
+    computed: {},
+    methods: {
+        back() {
+            this.$router.push("/");
+        },
+        openNewDetail(bord) {
+            this.borders = bord;
+        },
+    },
+    components: { Modal }
 };
 </script>
 

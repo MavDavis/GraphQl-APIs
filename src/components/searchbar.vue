@@ -16,6 +16,8 @@
 
 export default {
   name: "SearchBar",
+  props: ["data"],
+  
   data() {
     return {
       searchValue: "",
@@ -24,13 +26,12 @@ export default {
 methods:{
   searchCountry(){
   let newValue = (this.searchValue.toLocaleLowerCase());
-  let countryArray = JSON.parse(localStorage.getItem('country'))
-  let foundItem = countryArray.find(country => country.name.common.toLocaleLowerCase() === newValue)
+  let foundItem = this.data.edges.find(country => country.node.name.toLocaleLowerCase() === newValue)
  if(foundItem === undefined){
   alert('enter a valid country name')
  }else{
-  this.$router.push(`/Details/${foundItem.ccn3}`);
- }
+  this.$router.push(`/Details/${foundItem.node.cioc}`);
+}
   }
 }
 };
